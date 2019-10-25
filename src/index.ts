@@ -18,6 +18,10 @@ export interface ITresorExpressOptions {
   responseType: "json" | "html";
   // Whether content should be cached at all (default = () => true)
   shouldCache: (req: express.Request, res: express.Response) => boolean;
+  // Whether to check cache at all
+  shouldCheckCache: (req: express.Request, res: express.Response) => boolean;
+  // Tresor options
+  tresor: Partial<ITresorOptions>;
 }
 
 // Returns a string (like a session token or user ID) that identifies some sort of authenticated entity
@@ -66,12 +70,17 @@ export default class TresorExpress {
       next: express.NextFunction
     ) => {
       const beforeCache = +new Date();
-      const auth = this.options.auth(req, res);
-      const cached = await this.tresorInstance.adapter().checkCache({
-        path: req.originalUrl,
-        auth,
-        options: this.tresorInstance.options
-      });
+
+      let auth = null as string | null;
+      let cached = null as string | null;
+      if (this.options.shouldCheckCache) {
+        auth = this.options.auth(req, res);
+        cached = await this.tresorInstance.adapter().checkCache({
+          path: req.originalUrl,
+          auth,
+          options: this.tresorInstance.options
+        });
+      }
 
       if (cached != null) {
         if (this.tresorInstance.options.onCacheHit) {
@@ -91,11 +100,21 @@ export default class TresorExpress {
           instance: this.tresorInstance
         };
       } else {
-        if (this.tresorInstance.options.onCacheMiss)
+        if (
+          this.options.shouldCheckCache &&
+          this.tresorInstance.options.onCacheMiss
+        ) {
           this.tresorInstance.options.onCacheMiss(
             req.originalUrl,
             new Date().valueOf() - beforeCache
           );
+        }
+
+        req.$tresor = {
+          isCached: false,
+          value: "",
+          instance: this.tresorInstance
+        };
       }
 
       res.$tresor = {
@@ -128,44 +147,36 @@ export default class TresorExpress {
     };
   }
 
-  constructor(
-    options: Partial<ITresorExpressOptions>,
-    tresorOptions?: Partial<ITresorOptions>
-  ) {
-    this.tresorInstance = new Tresor(tresorOptions);
-
+  constructor(options?: Partial<ITresorExpressOptions>) {
     this.options = {
       auth: () => null,
       manualResponse: false,
       responseType: "json",
-      shouldCache: () => true
+      shouldCache: () => true,
+      shouldCheckCache: () => true,
+      tresor: new Tresor().options
     };
 
     if (options) Object.assign(this.options, options);
+    this.tresorInstance = new Tresor(this.options.tresor);
   }
 
-  static html(
-    options?: Partial<Omit<ITresorExpressOptions, "responseType">>,
-    tresorOptions?: Partial<ITresorOptions>
-  ) {
+  static html(options?: Partial<Omit<ITresorExpressOptions, "responseType">>) {
     let _options = {
       ...options,
       responseType: "html" as "html"
     };
 
-    return new TresorExpress(_options, tresorOptions);
+    return new TresorExpress(_options);
   }
 
-  static json(
-    options?: Partial<Omit<ITresorExpressOptions, "responseType">>,
-    tresorOptions?: Partial<ITresorOptions>
-  ) {
+  static json(options?: Partial<Omit<ITresorExpressOptions, "responseType">>) {
     let _options = {
       ...options,
       responseType: "json" as "json"
     };
 
-    return new TresorExpress(_options, tresorOptions);
+    return new TresorExpress(_options);
   }
 }
 

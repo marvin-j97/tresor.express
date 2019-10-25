@@ -8,19 +8,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+function __export(m) {
+    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+}
 Object.defineProperty(exports, "__esModule", { value: true });
 const tresor_1 = require("@dotvirus/tresor");
 class TresorExpress {
-    constructor(options, tresorOptions) {
-        this.tresorInstance = new tresor_1.Tresor(tresorOptions);
+    constructor(options) {
         this.options = {
             auth: () => null,
             manualResponse: false,
             responseType: "json",
-            shouldCache: () => true
+            shouldCache: () => true,
+            shouldCheckCache: () => true,
+            tresor: new tresor_1.Tresor().options
         };
         if (options)
             Object.assign(this.options, options);
+        this.tresorInstance = new tresor_1.Tresor(this.options.tresor);
     }
     instance() {
         return this.tresorInstance;
@@ -37,12 +42,16 @@ class TresorExpress {
     middleware() {
         return (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const beforeCache = +new Date();
-            const auth = this.options.auth(req, res);
-            const cached = yield this.tresorInstance.adapter().checkCache({
-                path: req.originalUrl,
-                auth,
-                options: this.tresorInstance.options
-            });
+            let auth = null;
+            let cached = null;
+            if (this.options.shouldCheckCache) {
+                auth = this.options.auth(req, res);
+                cached = yield this.tresorInstance.adapter().checkCache({
+                    path: req.originalUrl,
+                    auth,
+                    options: this.tresorInstance.options
+                });
+            }
             if (cached != null) {
                 if (this.tresorInstance.options.onCacheHit) {
                     this.tresorInstance.options.onCacheHit(req.originalUrl, new Date().valueOf() - beforeCache);
@@ -57,8 +66,15 @@ class TresorExpress {
                 };
             }
             else {
-                if (this.tresorInstance.options.onCacheMiss)
+                if (this.options.shouldCheckCache &&
+                    this.tresorInstance.options.onCacheMiss) {
                     this.tresorInstance.options.onCacheMiss(req.originalUrl, new Date().valueOf() - beforeCache);
+                }
+                req.$tresor = {
+                    isCached: false,
+                    value: "",
+                    instance: this.tresorInstance
+                };
             }
             res.$tresor = {
                 send: (value) => __awaiter(this, void 0, void 0, function* () {
@@ -84,13 +100,14 @@ class TresorExpress {
             next();
         });
     }
-    static html(options, tresorOptions) {
+    static html(options) {
         let _options = Object.assign(Object.assign({}, options), { responseType: "html" });
-        return new TresorExpress(_options, tresorOptions);
+        return new TresorExpress(_options);
     }
-    static json(options, tresorOptions) {
+    static json(options) {
         let _options = Object.assign(Object.assign({}, options), { responseType: "json" });
-        return new TresorExpress(_options, tresorOptions);
+        return new TresorExpress(_options);
     }
 }
 exports.default = TresorExpress;
+__export(require("@dotvirus/tresor"));

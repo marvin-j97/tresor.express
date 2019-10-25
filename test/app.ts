@@ -6,7 +6,7 @@ const app = express();
 
 app.get(
   "/memory/slow-html",
-  TresorExpress.html({}, { maxAge: "500ms" }).init(),
+  TresorExpress.html({ tresor: { maxAge: "500ms" } }).init(),
   async (req: express.Request, res: express.Response) => {
     setTimeout(() => {
       res.$tresor.send("Hello world!");
@@ -16,7 +16,7 @@ app.get(
 
 app.get(
   "/memory/slow-json",
-  TresorExpress.json({}, { maxAge: "500ms" }).init(),
+  TresorExpress.json({ tresor: { maxAge: "500ms" } }).init(),
   async (req: express.Request, res: express.Response) => {
     setTimeout(() => {
       res.$tresor.send({ hello: "world" });
@@ -26,10 +26,9 @@ app.get(
 
 app.get(
   "/file/slow-html",
-  TresorExpress.html(
-    {},
-    { maxAge: "500ms", adapter: new FileAdapter() }
-  ).init(),
+  TresorExpress.html({
+    tresor: { maxAge: "500ms", adapter: new FileAdapter() }
+  }).init(),
   async (req: express.Request, res: express.Response) => {
     setTimeout(() => {
       res.$tresor.send("Hello world!");
@@ -39,13 +38,12 @@ app.get(
 
 app.get(
   "/file/slow-json",
-  TresorExpress.json(
-    {},
-    {
+  TresorExpress.json({
+    tresor: {
       maxAge: "500ms",
       adapter: new FileAdapter("test/cache")
     }
-  ).init(),
+  }).init(),
   async (req: express.Request, res: express.Response) => {
     setTimeout(() => {
       res.$tresor.send({ hello: "world" });
@@ -53,12 +51,11 @@ app.get(
   }
 );
 
-const limiter100 = TresorExpress.html(
-  {},
-  {
+const limiter100 = TresorExpress.html({
+  tresor: {
     maxAge: "1.5 seconds"
   }
-);
+});
 export { limiter100 };
 
 app.get("/limit100", limiter100.init(), async (req, res) => {
@@ -67,12 +64,11 @@ app.get("/limit100", limiter100.init(), async (req, res) => {
   );
 });
 
-const twentyfourhours = TresorExpress.html(
-  {},
-  {
+const twentyfourhours = TresorExpress.html({
+  tresor: {
     maxAge: "24h"
   }
-);
+});
 export { twentyfourhours };
 
 app.get("/24hours", twentyfourhours.init(), async (req, res) => {

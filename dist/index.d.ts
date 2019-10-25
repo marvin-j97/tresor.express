@@ -10,6 +10,8 @@ export interface ITresorExpressOptions {
     manualResponse: boolean;
     responseType: "json" | "html";
     shouldCache: (req: express.Request, res: express.Response) => boolean;
+    shouldCheckCache: (req: express.Request, res: express.Response) => boolean;
+    tresor: Partial<ITresorOptions>;
 }
 export declare type AuthFunction = (req: express.Request, res: express.Response) => string | null;
 declare global {
@@ -32,7 +34,8 @@ export default class TresorExpress {
     private sendCached;
     init(): (req: express.Request, res: express.Response, next: express.NextFunction) => Promise<void>;
     middleware(): (req: express.Request, res: express.Response, next: express.NextFunction) => Promise<void>;
-    constructor(options: Partial<ITresorExpressOptions>, tresorOptions?: Partial<ITresorOptions>);
-    static html(options?: Partial<Omit<ITresorExpressOptions, "responseType">>, tresorOptions?: Partial<ITresorOptions>): TresorExpress;
-    static json(options?: Partial<Omit<ITresorExpressOptions, "responseType">>, tresorOptions?: Partial<ITresorOptions>): TresorExpress;
+    constructor(options?: Partial<ITresorExpressOptions>);
+    static html(options?: Partial<Omit<ITresorExpressOptions, "responseType">>): TresorExpress;
+    static json(options?: Partial<Omit<ITresorExpressOptions, "responseType">>): TresorExpress;
 }
+export * from "@dotvirus/tresor";
