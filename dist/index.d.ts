@@ -28,14 +28,15 @@ declare global {
     }
 }
 export default class TresorExpress {
-    tresorInstance: Tresor;
-    options: ITresorExpressOptions;
-    instance(): Tresor;
-    private sendCached;
-    init(): (req: express.Request, res: express.Response, next: express.NextFunction) => Promise<void>;
-    middleware(): (req: express.Request, res: express.Response, next: express.NextFunction) => Promise<void>;
+    private tresorInstance;
+    private options;
     constructor(options?: Partial<ITresorExpressOptions>);
     static html(options?: Partial<Omit<ITresorExpressOptions, "responseType">>): TresorExpress;
     static json(options?: Partial<Omit<ITresorExpressOptions, "responseType">>): TresorExpress;
+    $tresor(): Tresor;
+    instance(): Tresor;
+    private sendCached;
+    init(): (req: express.Request<import("express-serve-static-core").ParamsDictionary>, res: express.Response, next: express.NextFunction) => Promise<void>;
+    middleware(): (req: express.Request<import("express-serve-static-core").ParamsDictionary>, res: express.Response, next: express.NextFunction) => Promise<void>;
 }
 export * from "@dotvirus/tresor";

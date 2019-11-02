@@ -1,6 +1,6 @@
 {
   "name": "@dotvirus/tresor.express",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Tresor for Express",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,18 +18,18 @@
   "author": "dotvirus",
   "license": "MIT",
   "devDependencies": {
-    "@types/chai": "^4.2.3",
-    "@types/express": "^4.17.1",
+    "@types/chai": "^4.2.4",
+    "@types/express": "^4.17.2",
     "@types/mocha": "^5.2.7",
     "@types/sha1": "^1.1.2",
     "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
     "mocha": "^6.2.1",
     "ts-node": "^8.4.1",
-    "chai-http": "^4.3.0",
     "typescript": "^3.6.3"
   },
   "dependencies": {
-    "@dotvirus/tresor": "^0.2.0",
+    "@dotvirus/tresor": "^1.1.1",
     "express": "^4.17.1",
     "sha1": "^1.1.1"
   }

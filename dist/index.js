@@ -21,11 +21,22 @@ class TresorExpress {
             responseType: "json",
             shouldCache: () => true,
             shouldCheckCache: () => true,
-            tresor: new tresor_1.Tresor().options
+            tresor: new tresor_1.Tresor().getOpts()
         };
         if (options)
             Object.assign(this.options, options);
         this.tresorInstance = new tresor_1.Tresor(this.options.tresor);
+    }
+    static html(options) {
+        let _options = Object.assign(Object.assign({}, options), { responseType: "html" });
+        return new TresorExpress(_options);
+    }
+    static json(options) {
+        let _options = Object.assign(Object.assign({}, options), { responseType: "json" });
+        return new TresorExpress(_options);
+    }
+    $tresor() {
+        return this.tresorInstance;
     }
     instance() {
         return this.tresorInstance;
@@ -46,15 +57,12 @@ class TresorExpress {
             let cached = null;
             if (this.options.shouldCheckCache) {
                 auth = this.options.auth(req, res);
-                cached = yield this.tresorInstance.adapter().checkCache({
-                    path: req.originalUrl,
-                    auth,
-                    options: this.tresorInstance.options
-                });
+                cached = yield this.tresorInstance.checkCache(req.originalUrl, auth);
             }
             if (cached != null) {
-                if (this.tresorInstance.options.onCacheHit) {
-                    this.tresorInstance.options.onCacheHit(req.originalUrl, new Date().valueOf() - beforeCache);
+                const onHit = this.tresorInstance.getOpts().onCacheHit;
+                if (onHit) {
+                    onHit(req.originalUrl, new Date().valueOf() - beforeCache);
                 }
                 if (this.options.manualResponse === false) {
                     return this.sendCached(res, cached);
@@ -66,9 +74,9 @@ class TresorExpress {
                 };
             }
             else {
-                if (this.options.shouldCheckCache &&
-                    this.tresorInstance.options.onCacheMiss) {
-                    this.tresorInstance.options.onCacheMiss(req.originalUrl, new Date().valueOf() - beforeCache);
+                const onMiss = this.tresorInstance.getOpts().onCacheMiss;
+                if (this.options.shouldCheckCache && onMiss) {
+                    onMiss(req.originalUrl, new Date().valueOf() - beforeCache);
                 }
                 req.$tresor = {
                     isCached: false,
@@ -87,26 +95,12 @@ class TresorExpress {
                     if (typeof value == "object")
                         _value = JSON.stringify(value);
                     if (this.options.shouldCache(req, res))
-                        yield this.instance()
-                            .adapter()
-                            .addToCache({
-                            path: req.originalUrl,
-                            auth,
-                            options: this.tresorInstance.options
-                        }, _value);
+                        yield this.instance().addToCache(req.originalUrl, auth, _value);
                     return _value;
                 })
             };
             next();
         });
-    }
-    static html(options) {
-        let _options = Object.assign(Object.assign({}, options), { responseType: "html" });
-        return new TresorExpress(_options);
-    }
-    static json(options) {
-        let _options = Object.assign(Object.assign({}, options), { responseType: "json" });
-        return new TresorExpress(_options);
     }
 }
 exports.default = TresorExpress;
